@@ -31,63 +31,63 @@ import com.example.ecomarket.ui.components.ProductCard
 @Composable
 fun HomeScreen(
     onProductClick: (String) -> Unit,
+    onAddToCart: (com.example.ecomarket.data.model.Producto) -> Unit,
+    onCartClick: () -> Unit,
     vm: HomeViewModel = viewModel()
 ) {
-    // Estado actual: categoría seleccionada.
     val selectedCat by vm.category.collectAsState()
-
-    // Listas de categorías y productos (filtrados según la categoría seleccionada).
     val categories = vm.categories()
     val products = vm.productsFiltered()
 
-    // --- Barra superior (AppBar con menú y carrito) ---
     Scaffold(
         topBar = {
             EcoTopBar(
-                categories = categories,              // Lista de categorías visibles
-                selectedCategory = selectedCat,       // Categoría actual
-                onCategorySelected = { vm.setCategory(it) }, // Actualiza categoría al seleccionar
-                onCartClick = { /* TODO: navegación al carrito */ }
+                categories = categories,
+                selectedCategory = selectedCat,
+                onCategorySelected = { vm.setCategory(it) },
+                onCartClick = onCartClick
             )
         }
-    ) {
-        // Contenido principal del cuerpo (body) de la pantalla
-        innerPadding -> Column(Modifier.padding(innerPadding)) {
+    ) { innerPadding ->
+        Column(Modifier.padding(innerPadding)) {
 
-            // --- Sección de presentación (Hero Section) ---
             Surface(
-                color = MaterialTheme.colorScheme.secondaryContainer, modifier = Modifier.fillMaxWidth()
+                color = MaterialTheme.colorScheme.secondaryContainer,
+                modifier = Modifier.fillMaxWidth()
             ) {
                 Column(Modifier.padding(16.dp)) {
-                    Text("Buscamos ofrecer una experiencia de compra moderna.",style = MaterialTheme.typography.headlineSmall
+                    Text(
+                        "Buscamos ofrecer una experiencia de compra moderna.",
+                        style = MaterialTheme.typography.headlineSmall
                     )
-                    Text("Repostería de alta calidad para todas las ocasiones.", style = MaterialTheme.typography.bodyMedium
+                    Text(
+                        "Repostería de alta calidad para todas las ocasiones.",
+                        style = MaterialTheme.typography.bodyMedium
                     )
                     Spacer(Modifier.height(8.dp))
-                    Button(onClick = { /* TODO: navegación a la tienda completa */ }) {
-                        Text("Ver Tienda")
-                    }
+                    Button(onClick = { /* TODO */ }) { Text("Ver Tienda") }
                 }
             }
-            Spacer(Modifier.height(12.dp))
 
-            // --- Título de la sección de productos ---
-            Text("Nuestros Productos",style = MaterialTheme.typography.headlineMedium, modifier = Modifier.padding(horizontal = 16.dp))
+            Spacer(Modifier.height(12.dp))
+            Text(
+                "Nuestros Productos",
+                style = MaterialTheme.typography.headlineMedium,
+                modifier = Modifier.padding(horizontal = 16.dp)
+            )
             Spacer(Modifier.height(8.dp))
 
-            // --- Grilla de productos ---
             LazyVerticalGrid(
-                columns = GridCells.Adaptive(minSize = 260.dp),   // Tamaño adaptable a pantalla
-                contentPadding = PaddingValues(16.dp),            // Márgenes de la grilla
+                columns = GridCells.Adaptive(minSize = 260.dp),
+                contentPadding = PaddingValues(16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp),
                 horizontalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                // Renderiza cada producto usando ProductCard
                 items(products, key = { it.id }) { product ->
                     ProductCard(
                         product = product,
-                        onClick = { onProductClick(product.id) }, // Va al detalle
-                        onAddToCart = { /* TODO: agregar al carrito */ },
+                        onClick = { onProductClick(product.id) },
+                        onAddToCart = { onAddToCart(product) },
                         modifier = Modifier.fillMaxWidth()
                     )
                 }
