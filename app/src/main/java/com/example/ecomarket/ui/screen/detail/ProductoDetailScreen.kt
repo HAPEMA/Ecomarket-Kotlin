@@ -6,65 +6,75 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
+import com.example.ecomarket.data.model.Producto
 import com.example.ecomarket.data.repo.ProductoRepository
+import java.text.NumberFormat
+import java.util.Currency
+import java.util.Locale
 
 /**
  * Pantalla de **detalle de producto**.
  *
- * Muestra la información completa de un producto seleccionado desde la lista:
- * - Imagen principal del producto.
- * - Nombre, categoría y precio.
- * - Botón para agregar el producto al carrito.
+ * Muestra imagen, nombre, categoría y precio; además permite agregar el producto al carrito.
+ * Si el ID no existe, entrega una pantalla de “producto no encontrado”.
  *
- * Si el producto no existe (por ejemplo, si se accede con un ID inválido),
- * muestra un mensaje de error indicando que no fue encontrado.
- *
- * @param productId ID del producto seleccionado que llega desde la navegación.
+ * @param productId     ID del producto (desde la navegación).
+ * @param onAddToCart   Callback al presionar “Agregar al carrito”.
  */
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ProductDetailScreen(productId: String) {
-
-    // Se busca el producto correspondiente al ID recibido.
-    // "remember" evita recalcular el valor si el ID no cambia.
+fun ProductDetailScreen(
+    productId: String,
+    onAddToCart: (Producto) -> Unit
+) {
+    // Buscar producto por ID (memoizado por clave productId)
     val product = remember(productId) {
         ProductoRepository.products.firstOrNull { it.id == productId }
     }
 
-    // Si no existe el producto, mostramos una pantalla de error simple.
-    if (product == null) { Scaffold( topBar = { TopAppBar(title = { Text("Producto no encontrado") }) }
-        ) { innerPadding -> Text(text = "Oops, no encontramos este producto.",  modifier = Modifier
-            .padding(innerPadding)
-            .padding(16.dp))
+    // Estado: producto inexistente
+    if (product == null) {
+        Scaffold(topBar = { TopAppBar(title = { Text("Producto no encontrado") }) }) { inner ->
+            Text(
+                "Oops, no encontramos este producto.",
+                modifier = Modifier.padding(inner).padding(16.dp)
+            )
         }
-        return // terminamos la ejecución del composable
+        return
     }
 
-    // Si el producto existe, mostramos su detalle completo.
-    Scaffold(
-        topBar = { TopAppBar(title = { Text(product.nombre) }) }
-    ) { innerPadding -> Column(modifier = Modifier
-            .padding(innerPadding)
-            .padding(16.dp)
+    // Formateo CLP (sin decimales)
+    val precioFormateado = remember(product.precioCLP) {
+        NumberFormat.getCurrencyInstance(Locale("es", "CL")).apply {
+            currency = Currency.getInstance("CLP")
+            maximumFractionDigits = 0
+        }.format(product.precioCLP)
+    }
+
+    // Detalle del producto
+    Scaffold(topBar = { TopAppBar(title = { Text(product.nombre) }) }) { inner ->
+        Column(
+            Modifier
+                .padding(inner)
+                .padding(16.dp)
         ) {
-            // Imagen principal del producto (usa Coil para cargar desde URL).
-            AsyncImage(model = product.imagenUrl, contentDescription = product.nombre, modifier = Modifier
-                .fillMaxWidth().height(240.dp))
-                Spacer(Modifier.height(16.dp))
+            AsyncImage(
+                model = product.imagenUrl,
+                contentDescription = product.nombre,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(240.dp)
+            )
 
-            // Nombre del producto.
-            Text(text = product.nombre, style = MaterialTheme.typography.headlineSmall)
+            Spacer(Modifier.height(16.dp))
 
-            // Categoría (usa el tag si existe, o el nombre de categoría genérica).
-            Text(text = "Categoría: ${product.tag ?: product.categoryId}", style = MaterialTheme.typography.bodyMedium)
+            Text(product.nombre, style = MaterialTheme.typography.headlineSmall)
+            Text("Categoría: ${product.tag ?: product.categoryId}", style = MaterialTheme.typography.bodyMedium)
+            Text("Precio: $precioFormateado", style = MaterialTheme.typography.bodyMedium)
 
-            // Precio (sin formato monetario por ahora).
-            Text(text = "Precio: ${product.precioCLP} CLP", style = MaterialTheme.typography.bodyMedium)
             Spacer(Modifier.height(12.dp))
 
-            // Botón de acción: agregar al carrito.
-            Button(onClick = { /* TODO: Lógica para agregar al carrito */ }) {
+            Button(onClick = { onAddToCart(product) }) {
                 Text("Agregar al carrito")
             }
         }

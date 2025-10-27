@@ -27,6 +27,16 @@ object ProductoRepository {
             precioCLP = 45_000,
             imagenUrl = "https://patty.pe/wp-content/uploads/2024/05/TORTA-CUADRADA-2.png",
             tag = "Tortas Cuadradas"
+        ),
+        Producto(
+            id = "2",
+            nombre = "Torta Cuadrada de Frutas",
+            categoryId = "cuadradas",
+            precioCLP = 50_000,
+            imagenUrl = "https://i.pinimg.com/1200x/6e/12/02/6e1202f87816ce16f374ba3fd22e6d2c.jpg",
+            tag = "Tortas Cuadradas"
         )
+
     )
+
 }
