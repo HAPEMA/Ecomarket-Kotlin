@@ -49,6 +49,14 @@ dependencies {
     implementation("androidx.compose.ui:ui-tooling-preview")
     implementation(libs.androidx.navigation.compose)
     debugImplementation("androidx.compose.ui:ui-tooling")
+    // Material 3
+    implementation("androidx.compose.material3:material3")
+
+    // 🧩 Extensión para íconos como CameraAlt, Image, etc.
+    implementation("androidx.compose.material:material-icons-extended")
+
+    // Para los campos de texto con teclado (KeyboardOptions)
+    implementation("androidx.compose.ui:ui-text")
 
     // Navigation Compose
     implementation("androidx.navigation:navigation-compose:2.8.3")

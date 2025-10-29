@@ -4,40 +4,56 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.ecomarket.data.local.LocalProductStore
+import com.example.ecomarket.data.model.Producto
 import com.example.ecomarket.ui.components.EcoTopBar
 import com.example.ecomarket.ui.components.ProductCard
 
 /**
  * Pantalla principal de la aplicación (**HomeScreen**).
  *
- * Esta es la primera pantalla que ve el usuario al abrir la app.
- * Contiene:
- * - La barra superior ([EcoTopBar]) con el menú de categorías y acceso al carrito.
- * - Una sección de presentación (“hero”) con información de la tienda.
- * - Un listado de productos mostrado en formato de grilla.
- *
- * @param onProductClick Acción que se ejecuta al hacer clic en un producto
- *                       (por ejemplo, navegar al detalle).
- * @param vm ViewModel asociado ([HomeViewModel]) que maneja el estado
- *           de categorías y productos.
+ * - TopBar con categorías y acceso al carrito.
+ * - Sección “hero”.
+ * - Grilla de productos (repositorio + agregados locales).
+ * - FAB para ir al formulario de “Agregar producto”.
  */
-
-// ViewModel inyectado automáticamente
 @Composable
 fun HomeScreen(
     onProductClick: (String) -> Unit,
-    onAddToCart: (com.example.ecomarket.data.model.Producto) -> Unit,
+    onAddToCart: (Producto) -> Unit,
     onCartClick: () -> Unit,
-    vm: HomeViewModel = viewModel()
+    vm: HomeViewModel = viewModel(),
+    onAddProductClick: () -> Unit = {} // Navega a "add_product"
 ) {
+    // Estado actual de categoría
     val selectedCat by vm.category.collectAsState()
     val categories = vm.categories()
-    val products = vm.productsFiltered()
+
+    // Productos agregados por el usuario (persistidos en SharedPreferences)
+    val ctx = LocalContext.current
+    val userProducts = remember { mutableStateListOf<Producto>() }
+
+    // Carga inicial desde local storage
+    LaunchedEffect(Unit) {
+        userProducts.clear()
+        userProducts.addAll(LocalProductStore.load(ctx))
+    }
+
+    // Merge de productos: repositorio + locales (filtrados por categoría)
+    val products = remember(selectedCat, userProducts) {
+        val base = vm.productsFiltered()
+        val locals = if (selectedCat == "all") userProducts
+        else userProducts.filter { it.categoryId == selectedCat }
+        base + locals
+    }
 
     Scaffold(
         topBar = {
@@ -47,10 +63,16 @@ fun HomeScreen(
                 onCategorySelected = { vm.setCategory(it) },
                 onCartClick = onCartClick
             )
+        },
+        floatingActionButton = {
+            FloatingActionButton(onClick = onAddProductClick) {
+                Icon(Icons.Default.Add, contentDescription = "Agregar producto")
+            }
         }
     ) { innerPadding ->
         Column(Modifier.padding(innerPadding)) {
 
+            // Hero simple
             Surface(
                 color = MaterialTheme.colorScheme.secondaryContainer,
                 modifier = Modifier.fillMaxWidth()
@@ -65,18 +87,23 @@ fun HomeScreen(
                         style = MaterialTheme.typography.bodyMedium
                     )
                     Spacer(Modifier.height(8.dp))
-                    Button(onClick = { /* TODO */ }) { Text("Ver Tienda") }
+                    Button(onClick = { /* TODO: navegar a tienda completa */ }) {
+                        Text("Ver Tienda")
+                    }
                 }
             }
 
             Spacer(Modifier.height(12.dp))
+
             Text(
                 "Nuestros Productos",
                 style = MaterialTheme.typography.headlineMedium,
                 modifier = Modifier.padding(horizontal = 16.dp)
             )
+
             Spacer(Modifier.height(8.dp))
 
+            // Grilla de productos
             LazyVerticalGrid(
                 columns = GridCells.Adaptive(minSize = 260.dp),
                 contentPadding = PaddingValues(16.dp),
